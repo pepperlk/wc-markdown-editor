@@ -1,0 +1,33 @@
+{
+    "name": "wc-markdown-editor",
+    "version": "0.0.1",
+    "authors": [
+    "Lee Pepper <pepperlk@gmail.com>"
+  ],
+    "description": "An element providing a markdown editor",
+    "keywords": [
+    "web-component",
+    "polymer",
+    "markdown",
+      "editor"
+  ],
+    "main": "wc-markdown-editor.html",
+    "license": "http://polymer.github.io/LICENSE.txt",
+    "homepage": "https://github.com/pepperlk/wc-markdown-editor/",
+    "ignore": [
+    "/.*",
+    "/test/"
+  ],
+    "dependencies": {
+        "autosize": "~3.0.8",
+        "jquery": "~2.1.4",
+        "marked": "~0.3.5",
+        "pagedown": "~1.1.0",
+        "polymer": "Polymer/polymer#^1.0.0",
+        "to-markdown": "~1.2.1"
+    },
+    "devDependencies": {
+        "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+        "web-component-tester": "*"
+    }
+}

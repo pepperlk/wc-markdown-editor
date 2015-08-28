@@ -1,0 +1,314 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icons/editor-icons.html">
+<script src="../marked/lib/marked.js"></script>
+<script src="../jquery/dist/jquery.min.js"></script>
+<script src="../to-markdown/dist/to-markdown.js"></script>
+<script src="../autosize/dist/autosize.js"></script>
+<script>
+    (function ($) {
+        var defaults;
+        $.event.fix = (function (originalFix) {
+            return function (event) {
+                event = originalFix.apply(this, arguments);
+                if (event.type.indexOf('copy') === 0 || event.type.indexOf('paste') === 0) {
+                    event.clipboardData = event.originalEvent.clipboardData;
+                }
+                return event;
+            };
+        })($.event.fix);
+        defaults = {
+            callback: $.noop,
+            matchType: /image.*/
+        };
+        return $.fn.pasteImageReader = function (options) {
+            if (typeof options === "function") {
+                options = {
+                    callback: options
+                };
+            }
+            options = $.extend({}, defaults, options);
+            return this.each(function () {
+                var $this, element;
+                element = this;
+                $this = $(this);
+                return $this.bind('paste', function (event) {
+                    var clipboardData, found;
+                    found = false;
+                    clipboardData = event.clipboardData;
+                    return Array.prototype.forEach.call(clipboardData.types, function (type, i) {
+                        var file, reader;
+                        if (found) {
+                            return;
+                        }
+                        if (type.match(options.matchType) || clipboardData.items[i].type.match(options.matchType)) {
+                            file = clipboardData.items[i].getAsFile();
+                            reader = new FileReader();
+                            reader.onload = function (evt) {
+                                return options.callback.call(element, {
+                                    dataURL: evt.target.result,
+                                    event: evt,
+                                    file: file,
+                                    name: file.name
+                                });
+                            };
+                            reader.readAsDataURL(file);
+                            return found = true;
+                        }
+                    });
+                });
+            });
+        };
+    })(jQuery);
+
+
+    $.fn.extend({
+        insertAtCaret: function (myValue) {
+            if (document.selection) {
+                this.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+                this.focus();
+            } else if (this.selectionStart || this.selectionStart == '0') {
+                var startPos = this.selectionStart;
+                var endPos = this.selectionEnd;
+                var scrollTop = this.scrollTop;
+                this.value = this.value.substring(0, startPos) + myValue + this.value.substring(endPos, this.value.length);
+                this.focus();
+                this.selectionStart = startPos + myValue.length;
+                this.selectionEnd = startPos + myValue.length;
+                this.scrollTop = scrollTop;
+            } else {
+                this.value += myValue;
+                this.focus();
+            }
+        }
+    })
+
+    function wrapText(textArea, openTag, closeTag) {
+
+        var len = textArea.val().length;
+        var start = textArea[0].selectionStart;
+        var end = textArea[0].selectionEnd;
+        var selectedText = textArea.val().substring(start, end);
+        var replacement = openTag + selectedText + closeTag;
+        textArea.val(textArea.val().substring(0, start) + replacement + textArea.val().substring(end, len));
+    }
+</script>
+
+
+<dom-module id="wc-markdown-editor">
+
+    <style>
+        :host {
+            display: block;
+            box-sizing: border-box;
+        }
+        
+        :host .md-editor {
+            width: 100%;
+            min-height: 400px;
+            outline: none;
+            border: thin solid #ccc;
+        }
+        
+        :host .editor-container {
+            position: relative;
+            display: none;
+        }
+        
+        :host .editor-container .update-button {
+            position: absolute;
+            bottom: 4px;
+            right: -6px;
+        }
+        
+        :host .editor-content-container {
+            position: relative;
+            box-sizing: border-box;
+            border: thin solid transparent;
+        }
+        
+        :host.editing .editor-content-container {
+            display: none;
+        }
+        
+        :host.editing .editor-container {
+            display: block;
+        }
+        
+        :host .editor-content-container .edit-button {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            display: none;
+        }
+        
+        :host .editor-content-container:hover {
+            border: thin solid #ccc;
+        }
+        
+        :host .editor-content-container:hover .edit-button {
+            display: block;
+        }
+    </style>
+
+    <template>
+        <div class="editor-container">
+            <textarea class="md-editor">
+
+            </textarea>
+            <button class="update-button">
+                <iron-icon icon="editor:mode-edit"></iron-icon>UPDATE</button>
+        </div>
+
+        <div class="editor-content-container">
+            <div class="editor-content">
+                <content>
+
+
+                </content>
+
+            </div>
+            <button class="edit-button">
+                <iron-icon icon="editor:mode-edit"></iron-icon>EDIT</button>
+        </div>
+    </template>
+
+</dom-module>
+
+<script>
+    Polymer({
+
+        is: 'wc-markdown-editor',
+
+        properties: {
+
+
+
+        },
+
+        // Element Lifecycle
+
+        ready: function () {
+
+            var model = this;
+
+            //window.editor = this;
+
+            this.tomdconfig = {
+                converters: [{
+                        filter: 'span',
+                        replacement: function (content) {
+                            return content;
+                        }
+                },
+                    {
+                        filter: 'div',
+                        replacement: function (content) {
+                            return content;
+                        }
+                }
+                            ]
+            };
+
+            this.editorContent = $(this).find('.editor-content');
+            this.editor = $(this).find('.md-editor');
+
+            $($(this).find('.update-button')).bind('click', function(e){
+                e.preventDefault();
+                $(model).removeClass('editing');
+            })
+            
+             $($(this).find('.edit-button')).bind('click', function(e){
+                e.preventDefault();
+                $(model).addClass('editing');
+            })
+            
+            var options = {
+                renderer: new marked.Renderer(),
+                gfm: true,
+                tables: true,
+                breaks: false,
+                pedantic: false,
+                sanitize: true,
+                smartLists: true,
+                smartypants: true
+            };
+
+            var tokens = marked.lexer($(this.editorContent).html(), options);
+
+
+
+            $(this.editor).html(toMarkdown($(this.editorContent).html(), this.tomdconfig));
+            $(this.editorContent).html(marked($(this.editor).val()));
+
+
+            $(this.editorContent).bind('click', function () {
+                $(model).addClass('editing');
+            });
+
+
+            $(this.editor).bind('input propertychange', function () {
+
+                model.updateText();
+
+            });
+
+
+            $(this.editor).pasteImageReader(function (results) {
+                var dataURL, filename;
+
+                console.log(results);
+
+
+                //$(model.editor).insertAtCaret('<img src="'+results.dataURL+'" />');
+
+                $(model.editor).val($(model.editor).val() + '<img src="' + results.dataURL + '" />');
+
+
+                model.updateText();
+
+                return filename = results.filename, dataURL = results.dataURL, results;
+            });
+            
+            autosize($(this.editor));
+
+
+
+        },
+
+        attached: function () {
+
+        },
+
+        detached: function () {
+
+        },
+
+
+
+        updateText: function () {
+            $(this.editorContent).html(marked($(this.editor).val()));
+        },
+
+
+        boldSelection: function () {
+            wrapText($(this.editor), "**", "**");
+            this.updateText();
+        },
+          italicSelection: function () {
+            wrapText($(this.editor), "_", "_");
+            this.updateText();
+        },
+        
+          linkSelection: function () {
+         
+            this.updateText();
+        }
+
+
+
+
+    });
+</script>

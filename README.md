@@ -1,4 +1,4 @@
-# seed-element
+# wc-markdown-editor
 
 An element providing a starting point for your own reusable Polymer elements.
 

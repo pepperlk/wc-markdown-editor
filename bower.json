@@ -1,7 +1,9 @@
 {
+
   "name": "wc-markdown-editor",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "authors": [
+
     "Lee Pepper <pepperlk@gmail.com>"
   ],
   "description": "An element providing a markdown editor",
@@ -18,6 +20,7 @@
     "/.*",
     "/test/"
   ],
+
   "dependencies": {
     "autosize": "~3.0.8",
     "iron-icons": "PolymerElements/iron-icons#~1.0.3",
@@ -36,4 +39,5 @@
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
     "web-component-tester": "*"
   }
+
 }

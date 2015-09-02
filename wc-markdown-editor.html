@@ -1,6 +1,15 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../iron-icons/editor-icons.html">
+
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../neon-animation/neon-animation.html">
+
+
+
 <script src="../marked/lib/marked.js"></script>
 <script src="../jquery/dist/jquery.min.js"></script>
 <script src="../to-markdown/dist/to-markdown.js"></script>
@@ -94,6 +103,27 @@
         var replacement = openTag + selectedText + closeTag;
         textArea.val(textArea.val().substring(0, start) + replacement + textArea.val().substring(end, len));
     }
+
+
+    function getText(textArea) {
+
+        var len = textArea.val().length;
+        var start = textArea[0].selectionStart;
+        var end = textArea[0].selectionEnd;
+        var selectedText = textArea.val().substring(start, end);
+        return selectedText;
+    }
+
+
+    function replaceText(textArea, replaceText) {
+
+        var len = textArea.val().length;
+        var start = textArea[0].selectionStart;
+        var end = textArea[0].selectionEnd;
+        var selectedText = textArea.val().substring(start, end);
+        //        var replacement = openTag + selectedText + closeTag;
+        textArea.val(textArea.val().substring(0, start) + replaceText + textArea.val().substring(end, len));
+    }
 </script>
 
 
@@ -151,9 +181,38 @@
         :host .editor-content-container:hover .edit-button {
             display: block;
         }
+        
+        :host .wc-editor-link-dialog {
+            max-width: 500px;
+        }
     </style>
 
     <template>
+
+        <paper-dialog class="wc-editor-link-dialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation">
+            <h2>Add Hyperlink</h2>
+            <p>
+                <iorn-form>
+                    <paper-input label="Text" value="{{linkObj.text}}"></paper-input>
+                    <paper-input label="Link" value="{{linkObj.link}}"></paper-input>
+
+
+                </iorn-form>
+
+            </p>
+            <div class="buttons">
+                <paper-button dialog-confirm>Cancel</paper-button>
+                <paper-button on-click="updateLink" dialog-confirm autofocus>OK</paper-button>
+            </div>
+        </paper-dialog>
+        
+        <div class="toolbar">
+           <paper-icon-button on-click="boldSelection" icon="editor:format-bold"></paper-icon-button>
+           <paper-icon-button on-click="italicSelection" icon="editor:format-italic"></paper-icon-button>
+           <paper-icon-button on-click="linkSelection" icon="editor:insert-link"></paper-icon-button>
+            
+        </div>
+
         <div class="editor-container">
             <textarea class="md-editor">
 
@@ -190,9 +249,26 @@
 
         // Element Lifecycle
 
+        linkObj : {
+            text: "",
+            link: ""
+
+        },
+
         ready: function () {
 
+
+
+
+
             var model = this;
+
+
+            model.linkObj = {
+                text: "",
+                link: ""
+
+            }
 
             //window.editor = this;
 
@@ -215,16 +291,16 @@
             this.editorContent = $(this).find('.editor-content');
             this.editor = $(this).find('.md-editor');
 
-            $($(this).find('.update-button')).bind('click', function(e){
+            $($(this).find('.update-button')).bind('click', function (e) {
                 e.preventDefault();
                 $(model).removeClass('editing');
             })
-            
-             $($(this).find('.edit-button')).bind('click', function(e){
+
+            $($(this).find('.edit-button')).bind('click', function (e) {
                 e.preventDefault();
                 $(model).addClass('editing');
             })
-            
+
             var options = {
                 renderer: new marked.Renderer(),
                 gfm: true,
@@ -245,7 +321,14 @@
 
 
             $(this.editorContent).bind('click', function () {
+
                 $(model).addClass('editing');
+
+
+                var evt = document.createEvent('Event');
+                evt.initEvent('autosize:update', true, false);
+                model.editor[0].dispatchEvent(evt)
+
             });
 
 
@@ -271,12 +354,17 @@
 
                 return filename = results.filename, dataURL = results.dataURL, results;
             });
-            
+
             autosize($(this.editor));
 
 
 
         },
+
+
+
+
+
 
         attached: function () {
 
@@ -285,6 +373,7 @@
         detached: function () {
 
         },
+
 
 
 
@@ -297,13 +386,38 @@
             wrapText($(this.editor), "**", "**");
             this.updateText();
         },
-          italicSelection: function () {
+        italicSelection: function () {
             wrapText($(this.editor), "_", "_");
             this.updateText();
         },
-        
-          linkSelection: function () {
-         
+
+        linkSelection: function () {
+
+            $(this).find('.wc-editor-link-dialog').get(0).open();
+
+            
+            
+            this.linkObj.text = {
+                text: "",
+                link: ""
+
+            };
+            
+            this.linkObj.text = getText($(this.editor));
+            
+            
+            this.notifyPath('linkObj.text', this.linkObj.text);
+
+            //this.updateText();
+        },
+
+        updateLink: function () {
+
+
+
+            
+            
+            replaceText($(this.editor), "["+this.linkObj.text+"]("+this.linkObj.link+")");
             this.updateText();
         }
 

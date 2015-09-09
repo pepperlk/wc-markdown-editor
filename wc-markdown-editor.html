@@ -205,12 +205,12 @@
                 <paper-button on-click="updateLink" dialog-confirm autofocus>OK</paper-button>
             </div>
         </paper-dialog>
-        
+
         <div class="toolbar">
-           <paper-icon-button on-click="boldSelection" icon="editor:format-bold"></paper-icon-button>
-           <paper-icon-button on-click="italicSelection" icon="editor:format-italic"></paper-icon-button>
-           <paper-icon-button on-click="linkSelection" icon="editor:insert-link"></paper-icon-button>
-            
+            <paper-icon-button on-click="boldSelection" icon="editor:format-bold"></paper-icon-button>
+            <paper-icon-button on-click="italicSelection" icon="editor:format-italic"></paper-icon-button>
+            <paper-icon-button on-click="linkSelection" icon="editor:insert-link"></paper-icon-button>
+
         </div>
 
         <div class="editor-container">
@@ -249,7 +249,7 @@
 
         // Element Lifecycle
 
-        linkObj : {
+        linkObj: {
             text: "",
             link: ""
 
@@ -261,7 +261,14 @@
 
 
 
+
+            
+
+
+
             var model = this;
+            
+            model.event = new Event('updateValue');
 
 
             model.linkObj = {
@@ -269,6 +276,21 @@
                 link: ""
 
             }
+
+
+
+            $('html').click(function () {
+                //Hide the menus if visible
+
+
+                model._onDoneEditing();
+
+            });
+
+            $(model).click(function (event) {
+                event.stopPropagation();
+            });
+
 
             //window.editor = this;
 
@@ -293,12 +315,13 @@
 
             $($(this).find('.update-button')).bind('click', function (e) {
                 e.preventDefault();
-                $(model).removeClass('editing');
+                //$(model).removeClass('editing');
+                model._onDoneEditing();
             })
 
             $($(this).find('.edit-button')).bind('click', function (e) {
                 e.preventDefault();
-                $(model).addClass('editing');
+                model._onEditing();
             })
 
             var options = {
@@ -322,12 +345,10 @@
 
             $(this.editorContent).bind('click', function () {
 
-                $(model).addClass('editing');
+
+                model._onEditing();
 
 
-                var evt = document.createEvent('Event');
-                evt.initEvent('autosize:update', true, false);
-                model.editor[0].dispatchEvent(evt)
 
             });
 
@@ -364,8 +385,35 @@
 
 
 
+        _onEditing: function () {
+            $(this).addClass('editing');
 
 
+            var evt = document.createEvent('Event');
+            evt.initEvent('autosize:update', true, false);
+            this.editor[0].dispatchEvent(evt);
+
+
+            // document.body.addEventListener('focus', this._boundOnFocus, true);
+            //this.backdropElement.addEventListener('click', this._boundOnBackdropClick);
+
+
+        },
+
+        _onDoneEditing: function () {
+            
+            
+            
+            this.dispatchEvent(this.event);
+            
+           // $(this).trigger('updateValue');
+            
+            
+            $(this).removeClass('editing');
+            //document.body.removeEventListener('focus', this._boundOnFocus, true);
+            //this.backdropElement.removeEventListener('click', this._boundOnBackdropClick);
+
+        },
         attached: function () {
 
         },
@@ -395,17 +443,17 @@
 
             $(this).find('.wc-editor-link-dialog').get(0).open();
 
-            
-            
+
+
             this.linkObj.text = {
                 text: "",
                 link: ""
 
             };
-            
+
             this.linkObj.text = getText($(this.editor));
-            
-            
+
+
             this.notifyPath('linkObj.text', this.linkObj.text);
 
             //this.updateText();
@@ -415,9 +463,9 @@
 
 
 
-            
-            
-            replaceText($(this.editor), "["+this.linkObj.text+"]("+this.linkObj.link+")");
+
+
+            replaceText($(this.editor), "[" + this.linkObj.text + "](" + this.linkObj.link + ")");
             this.updateText();
         }
 
